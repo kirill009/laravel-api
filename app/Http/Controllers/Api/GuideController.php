@@ -8,10 +8,10 @@ use App\Http\Controllers\Api\BaseController;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Contracts\ContractIActionsData\StorageFactory;
 
 class GuideController extends BaseController
 {
-    private $fileStorageJson = 'db.json';
     /**
      * Display a listing of the resource.
      *
@@ -20,17 +20,12 @@ class GuideController extends BaseController
      */
     public function index(Request $request)
     {
-        if ($request->input('storage') && $request->input('storage') === "json") {
-            if (Storage::disk('local')->exists($this->fileStorageJson)) {
-                $contents = Storage::get($this->fileStorageJson);
-                return $this->sendResponse($contents, 'All guide.');
-            } else {
-                return $this->sendError('Json file not exist');
-            }
-        } else {
-            $elementsGiude = Guide::all();
-            return $this->sendResponse($elementsGiude->toArray(), 'All guide.');
+        $objectStorage = StorageFactory::make($request->input('storage'));
+        $data = $objectStorage->get();
+        if ($data) {
+            return $this->sendResponse($data, 'All data guide.');
         }
+        return $this->sendError('Data not exist');
     }
     /**
      * Store a newly created resource in storage.
@@ -50,16 +45,11 @@ class GuideController extends BaseController
             return $this->sendError('Validation Error.', $validator->errors());
         }
 
-        if ($request->input('storage') && $request->input('storage') === "json") {
-            if (Storage::disk('local')->exists($this->fileStorageJson)) {
-                Storage::append($this->fileStorageJson, json_encode($input));
-            } else {
-                Storage::put($this->fileStorageJson, json_encode($input), 'private');
-            }
-            return $this->sendResponse($input, 'Guide element in json file created successfully.');
-        } else {
-            $elementGiude = Guide::create($input);
-            return $this->sendResponse($elementGiude->toArray(), 'Guide element created successfully.');
+        $objectStorage = StorageFactory::make($request->input('storage'));
+        $datum = $objectStorage->set($input);
+        if ($datum) {
+            return $this->sendResponse($datum, 'Guide element created successfully.');
         }
+        return $this->sendError('Guide element not created.');
     }
 }
