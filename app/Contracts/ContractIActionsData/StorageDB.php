@@ -14,7 +14,7 @@ class StorageDB implements IActionsData
         if ($elementGiude) {
             return $elementGiude->toArray();
         }
-        return false;//$this->sendResponse($elementGiude->toArray(), 'Guide element created successfully.');
+        return false;
     }
 
     public function get()

@@ -8,22 +8,31 @@ use Illuminate\Support\Facades\Storage;
 
 class StorageJson implements IActionsData
 {
-    private $fileStorageJson = 'db.json';
+    protected $fileStorageJson = 'db.json';
+    protected $typeStorageJson = 'local';
 
     public function set(array $input)
     {
-        if (Storage::disk('local')->exists($this->fileStorageJson)) {
-            return Storage::append($this->fileStorageJson, json_encode($input));
+        $contents = Storage::get($this->fileStorageJson);
+        if ($contents) {
+            $contents = json_decode($contents, true);
+            $contents[] = $input;
         } else {
-            return Storage::put($this->fileStorageJson, json_encode($input), 'private');
+            $contents = [];
+            $contents[] = $input;
+        }
+        
+        if (Storage::put($this->fileStorageJson, json_encode($contents), 'private')) {
+            return $input;
         }
         return false;
     }
 
     public function get()
     {
-        if (Storage::disk('local')->exists($this->fileStorageJson)) {
-            return Storage::get($this->fileStorageJson);
+        if (Storage::disk($this->typeStorageJson)->exists($this->fileStorageJson)) {
+            $contents = Storage::get($this->fileStorageJson);
+            return json_decode($contents, true);
         }
         return false;
     }
